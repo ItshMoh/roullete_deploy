@@ -1,0 +1,21 @@
+{
+  "name": "roullet_p4w3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@oasisprotocol/sapphire-hardhat": "^2.19.4",
+    "hardhat": "^2.22.15"
+  },
+  "dependencies": {
+    "@oasisprotocol/sapphire-contracts": "^0.2.11",
+    "dotenv": "^16.4.5"
+  }
+}
