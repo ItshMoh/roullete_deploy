@@ -25,7 +25,9 @@ contract MoneyPool {
     address[] internal contributorsEvenOdd; // list of contributors  for the even odd game.
 
     Bet[] internal bets;
-    mapping(address => bool) public hasBet;
+    
+
+    
 
     event PoolOpened(uint endTime);
     event ContributionReceived(address indexed player, uint amount);
@@ -45,6 +47,22 @@ contract MoneyPool {
     constructor() {
         owner = msg.sender;
     }
+    function resetPool() internal {
+        poolBalance = 0;
+        // Reset all contributors arrays
+        delete contributorsNumber;
+        
+        // Reset all mappings
+        for(uint i = 0; i < contributorsNumber.length; i++) {
+            address contributor = contributorsNumber[i];
+            contributionsNumber[contributor] = 0;
+            choiceNumber[contributor] = 0;
+            
+        
+        delete bets;
+        poolEndTime = 0;
+    }
+    }
 
     function openPool(uint duration) external  {
         poolEndTime = block.timestamp + duration;
@@ -53,7 +71,7 @@ contract MoneyPool {
 
     function placeBet(BetType betType, uint8 choice,uint8 amount) public  payable {
         require(amount > 0, "Bet amount must be more than 0");
-        require(!hasBet[msg.sender], "Player has already placed a bet");
+      
         // Store the bet information
         bets.push(Bet({
             player: msg.sender,
@@ -80,7 +98,7 @@ contract MoneyPool {
         }
 
         poolBalance += amount;
-        hasBet[msg.sender] = true;
+        
         emit BetPlaced(msg.sender, betType, choice, amount);
     }
 
@@ -92,4 +110,3 @@ contract MoneyPool {
     }
 }
 
-// 0x150eA9e7BEcD5291B8bD27D935E08A25f41bD4d9

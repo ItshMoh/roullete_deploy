@@ -5,7 +5,7 @@ async function main() {
   console.log("Deploying RouletteGame contract with the account:", deployer.address);
 
   // Replace this with the actual MoneyPool contract address after deployment
-  const moneyPoolAddress = "0x150eA9e7BEcD5291B8bD27D935E08A25f41bD4d9"; // Update with MoneyPool's deployed address
+  const moneyPoolAddress = "0x198feaB3B1e3a7aAEC57aF428001b38503a7C0B0"; // Update with MoneyPool's deployed address
 
   const RouletteGame = await ethers.getContractFactory("RouletteGame");
   const rouletteGame = await RouletteGame.deploy(moneyPoolAddress);

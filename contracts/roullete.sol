@@ -30,6 +30,7 @@ contract RouletteGame is MoneyPool {
 
     function scheduleMatch(uint duration, uint feePercent) external payable  {
         require(feePercent <= maxFeePercent, "Fee exceeds max allowed percent");
+        resetPool();
         matchEndTime = block.timestamp + duration;
         matchFee = (poolContract.poolBalance() * feePercent) / 100;
         emit MatchScheduled(matchEndTime, matchFee);
@@ -42,8 +43,9 @@ contract RouletteGame is MoneyPool {
     }
 
     function betOnNumber  (uint8 numberchosen,uint8 amount ) public payable {
+       require(block.timestamp < matchEndTime, "Match is closed");
        require((numberchosen<36),"The number must not be greater than 36");
-       require((amount>2),"The amount should be greater than 2");
+       require((amount>0),"The amount should be greater than 2");
        placeBet(MoneyPool.BetType.Number,numberchosen, amount); 
     }
 
@@ -55,39 +57,48 @@ contract RouletteGame is MoneyPool {
        placeBet(MoneyPool.BetType.EvenOdd,paritychosen, amount); 
     }
     
-    function isNumberWinner() public returns(address){
-        uint256 randomseed = getRandomBytes();
-        uint8 winningNumber = uint8(randomseed % 37); 
-        
-        for(uint i=0;i<contributorsNumber.length;i++){
-            address tocheckAddress = contributorsNumber[i]; 
+    function isNumberWinner() public returns(address) {
 
-            if(choiceNumber[tocheckAddress]==winningNumber){
-                winnerNumber.push(tocheckAddress);
-                
-            }
-           
+    uint256 randomseed = getRandomBytes();
+    uint8 winningNumber = uint8(randomseed % 37); 
+    
+    // Clear previous winners
+    delete winnerNumber;
+    
+    // Find all winners
+    for(uint i=0; i < contributorsNumber.length; i++) {
+        address tocheckAddress = contributorsNumber[i]; 
+        if(choiceNumber[tocheckAddress] == winningNumber) {
+            winnerNumber.push(tocheckAddress);
         }
-        if (winnerNumber.length >1){
-            address mainWinner = address(0);
-              for(uint i=0;i< winnerNumber.length;i++){
-                address winnerAddress = winnerNumber[i];
-                uint winnerAmount = 0; 
-                
-                if(contributionsNumber[winnerNumber[i]]>winnerAmount){
-                    winnerAmount = contributionsNumber[winnerAddress];
-                    mainWinner = winnerAddress;
-                }
-        } 
-            
-            // emit MatchEnded(mainWinner, );
-            return mainWinner;
-        }
-        else{
-            return winnerNumber[0];
-        }
-        
     }
+
+    // If no winners, return zero address
+    if(winnerNumber.length == 0) {
+        return address(0);
+    }
+    
+    // If only one winner, return that winner
+    if(winnerNumber.length == 1) {
+        return winnerNumber[0];
+    }
+
+    // If multiple winners, find the one who bet the most
+    address mainWinner = winnerNumber[0];
+    uint maxBet = contributionsNumber[mainWinner];
+
+    for(uint i = 1; i < winnerNumber.length; i++) {
+        address currentAddr = winnerNumber[i];
+        uint currentBet = contributionsNumber[currentAddr];
+        if(currentBet > maxBet) {
+            maxBet = currentBet;
+            mainWinner = currentAddr;
+        }
+    }
+    
+    return mainWinner;
+}
+
     function isColorWinner(uint number, uint choice) internal pure returns (bool) {
         
     }
@@ -97,16 +108,17 @@ contract RouletteGame is MoneyPool {
     }
 
     function calculatePayout() internal view returns (uint) { 
-        return poolBalance - (poolBalance *2)/100; // Simple example, adjust as needed for odds
-    }
+    require(poolBalance > 0, "Pool is empty");
+    uint fee = (poolBalance * 2) / 100; // 2% fee
+    return poolBalance - fee;
+}
 
-    function gameEnded() public  payable {
+    function gameEnded() public   {
         require((block.timestamp>matchEndTime),"The match is still open");
         address winner = isNumberWinner();
+        require(winner != address(0), "No winner found");
         uint amountToWinner = calculatePayout();
         payout(winner, amountToWinner);
         emit MatchEnded(winner, amountToWinner);
-    } 
+    }
 }
-
-// 0x9FB342f34962898D20EB6bCa1C5f3fbaD2Bb1840
