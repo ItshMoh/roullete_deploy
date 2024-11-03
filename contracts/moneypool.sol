@@ -46,12 +46,12 @@ contract MoneyPool {
         owner = msg.sender;
     }
 
-    function openPool(uint duration) external onlyOwner {
+    function openPool(uint duration) external  {
         poolEndTime = block.timestamp + duration;
         emit PoolOpened(poolEndTime);
     }
 
-    function placeBet(BetType betType, uint8 choice,uint8 amount) public  payable poolOpen {
+    function placeBet(BetType betType, uint8 choice,uint8 amount) public  payable {
         require(amount > 0, "Bet amount must be more than 0");
         require(!hasBet[msg.sender], "Player has already placed a bet");
         // Store the bet information
@@ -84,7 +84,7 @@ contract MoneyPool {
         emit BetPlaced(msg.sender, betType, choice, amount);
     }
 
-    function payout(address winner, uint amount) external onlyOwner {
+    function payout(address winner, uint amount) internal {
         require(amount <= poolBalance, "Insufficient funds in the pool");
         payable(winner).transfer(amount);
         poolBalance -= amount;
@@ -92,3 +92,4 @@ contract MoneyPool {
     }
 }
 
+// 0x150eA9e7BEcD5291B8bD27D935E08A25f41bD4d9

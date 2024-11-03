@@ -28,7 +28,7 @@ contract RouletteGame is MoneyPool {
         owner = msg.sender;
     }
 
-    function scheduleMatch(uint duration, uint feePercent) external onlyOwner {
+    function scheduleMatch(uint duration, uint feePercent) external payable  {
         require(feePercent <= maxFeePercent, "Fee exceeds max allowed percent");
         matchEndTime = block.timestamp + duration;
         matchFee = (poolContract.poolBalance() * feePercent) / 100;
@@ -36,14 +36,13 @@ contract RouletteGame is MoneyPool {
     }
 
     
-    
     function getRandomBytes() internal view returns (uint256){
        bytes memory randomBytes = Sapphire.randomBytes(32, "");
        return uint256(keccak256(randomBytes));
     }
 
-    function betOnNumber  (uint8 numberchosen,uint8 amount ) public{
-       require((numberchosen>36),"The number must not be greater than 36");
+    function betOnNumber  (uint8 numberchosen,uint8 amount ) public payable {
+       require((numberchosen<36),"The number must not be greater than 36");
        require((amount>2),"The amount should be greater than 2");
        placeBet(MoneyPool.BetType.Number,numberchosen, amount); 
     }
@@ -56,7 +55,7 @@ contract RouletteGame is MoneyPool {
        placeBet(MoneyPool.BetType.EvenOdd,paritychosen, amount); 
     }
     
-    function isNumberWinner() internal returns(address){
+    function isNumberWinner() public returns(address){
         uint256 randomseed = getRandomBytes();
         uint8 winningNumber = uint8(randomseed % 37); 
         
@@ -101,5 +100,13 @@ contract RouletteGame is MoneyPool {
         return poolBalance - (poolBalance *2)/100; // Simple example, adjust as needed for odds
     }
 
-    
+    function gameEnded() public  payable {
+        require((block.timestamp>matchEndTime),"The match is still open");
+        address winner = isNumberWinner();
+        uint amountToWinner = calculatePayout();
+        payout(winner, amountToWinner);
+        emit MatchEnded(winner, amountToWinner);
+    } 
 }
+
+// 0x9FB342f34962898D20EB6bCa1C5f3fbaD2Bb1840
